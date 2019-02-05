@@ -7,6 +7,14 @@ slices of approximately 50μs and switches threads each slice to simulate
 interrupt-driven process scheduling. Your task is to implement scheduling,
 sleep, and priority donation.
 
+## KNOWN ISSUES
+
+1. The simulator does not work reliably when run on VMs with multiple cores.
+   Note that the VirtualBox default is one core.
+2. The simulator does not work under WSL on multi-core systems. This is likely
+   related to the other multi-core issue but the failure rate is 100% on WSL
+   and only 50% on a four-core VirtualBox system.
+
 ## STOP HERE
 
 This assignment is _significantly_ more difficult than the first assignment. It
