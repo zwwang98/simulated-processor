@@ -194,7 +194,7 @@ void thePoint() {
     Point2D origin; // Oops, this will be random, let's fix that later
     const Point2D *originPtr = &origin;
 
-    size_t size1 = sizeof(Point);
+    size_t size1 = sizeof(Point2D);
     size_t size2 = sizeof(origin);
     size_t size3 = sizeof(int) + sizeof(int);
     size_t size4 = sizeof(Point2D *);
