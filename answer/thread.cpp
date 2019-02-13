@@ -38,7 +38,7 @@ Thread* nextThreadToRun(int currentTick) {
         return NULL;
     Thread* ret = NULL;
     do {
-        int threadIndex = listSize(readyList) - 1;
+        int threadIndex = 0;
         sprintf(line, "[nextThreadToRun] trying thread index %d\n",
                 threadIndex);
         verboseLog(line);
