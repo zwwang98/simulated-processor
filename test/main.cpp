@@ -1,5 +1,4 @@
-#include <malloc.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <cstring>
 #include "Lock.h"
 #include "Logger.h"

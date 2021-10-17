@@ -1,8 +1,11 @@
 #ifndef OS_THREADING_THREAD_H
 #define OS_THREADING_THREAD_H
 
-#include <pthread.h>
 #include <cstdlib>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
+#include "boost/thread/thread.hpp"
 #include "Thread.h"
 #include "ThreadingConstants.h"
 
@@ -17,25 +20,22 @@ class InternalThread {
     void pause();
     void resume();
     void start();
-    void exit();
     State getState();
-    int joinWithTimeout();
-    int join();
+    bool joinWithTimeout();
+    bool join();
     Thread* getExternalThread();
+    void sendSignal(int sig, State waitForState);
     void runningSigFunc(int sig);
     void stopExecution();
 
    private:
-    pthread_t thread;
-    pthread_mutex_t sleepMutex;
-    pthread_mutex_t stateMutex;
-    pthread_mutex_t signalMutex;
-    pthread_mutex_t stopExecutionMutex;
-    pthread_cond_t stopExecutionCond;
+    boost::thread *currentThread;
+    std::mutex stateMutex;
+    std::mutex stopExecutionMutex;
+    std::condition_variable stopExecutionCond;
 
     State currentState;
     void* (*func)(void*);
-    void sendSignal(int sig, State waitForState);
 
     void setState(State newState);
     static void* startThread(void* thread);

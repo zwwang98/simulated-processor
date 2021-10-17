@@ -135,12 +135,18 @@ Your solution should handle multiple donation, in which multiple threads donate 
 
 ### Building and Testing
 
-Due to issues encountered in Assignment 1, you will use `cmake` directly.
+#### On Mac
+This project will build on Mac, you will need to install homebrew already if you haven't. You can find instructions here: https://brew.sh/
+
+Once done run the following command
+```shell
+brew install boost-build
+```
+
+#### On All Platforms
+You should run the following next. Keep in mind cmake will take a long time as it has to download and build all of boost.
 
 ```bash
-git clone git@github.ccs.neu.edu:CS5600Spring2018/my_project2
-cd my_project2
-
 # Do this once to download googletest and set up makefiles
 # You shouldn't need to run this more than once
 # This assignment has a new dependency.

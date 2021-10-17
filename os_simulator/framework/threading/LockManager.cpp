@@ -17,8 +17,7 @@ const char* LockManager::createLock() {
     uuid_generate(uuid);
     char* id = new char[UUID_LENGTH]();
     uuid_unparse(uuid, id);
-    pthread_mutex_t* mutex = new pthread_mutex_t();
-    pthread_mutex_init(mutex, NULL);
+    boost::mutex* mutex = new boost::mutex();
     locks[id] = mutex;
     lockCreated(id);
     return id;
@@ -29,22 +28,29 @@ bool LockManager::lock(const char* lockId) {
         ThreadManager::getInstance()->currentThread()->getExternalThread();
     if (locks.count(lockId) == 1) {
         lockAttempted(lockId, currentThread);
-        if (pthread_mutex_lock(locks[lockId]) == 0) {
+        try {
+            locks[lockId]->lock();
             lockAcquired(lockId, currentThread);
             return true;
+        }catch(boost::exception& e) {
+            lockFailed(lockId, currentThread);
+            return false;
         }
     }
-    lockFailed(lockId, currentThread);
+
     return false;
 }
 
 bool LockManager::unlock(const char* lockId) {
     if (locks.count(lockId) == 1) {
-        if (pthread_mutex_unlock(locks[lockId]) == 0) {
+        try {
+            locks[lockId]->unlock();
             lockReleased(lockId, ThreadManager::getInstance()
                                      ->currentThread()
                                      ->getExternalThread());
             return true;
+        }catch (boost::exception& e) {
+            return false;
         }
     }
     return false;
@@ -53,10 +59,9 @@ bool LockManager::unlock(const char* lockId) {
 LockManager::LockManager() {}
 
 LockManager::~LockManager() {
-    for (map<const char*, pthread_mutex_t*>::iterator iter =
+    for (map<const char*, boost::mutex*>::iterator iter =
              singleton->locks.begin();
          iter != singleton->locks.end(); iter++) {
-        pthread_mutex_destroy(iter->second);
         delete iter->second;
         delete iter->first;
     }
@@ -72,7 +77,7 @@ LockManager* LockManager::getInstance() {
 
 void LockManager::destroyLock(const char* lockId) {
     if (locks.count(lockId) == 1) {
-        pthread_mutex_destroy(locks[lockId]);
+        delete locks[lockId];
         locks.erase(lockId);
     }
 }
@@ -84,13 +89,11 @@ bool LockManager::lockExists(const char* lockId) {
 bool LockManager::isLocked(const char* lockId) {
     bool ret = false;
     if (locks.count(lockId) == 1) {
-        int tryLock = pthread_mutex_trylock(locks[lockId]);
-        ret = tryLock != 0;
-        if (tryLock == 0) {
-            pthread_mutex_unlock(locks[lockId]);
+        ret = locks[lockId]->try_lock();
+        if (ret) {
+            locks[lockId]->unlock();
         }
     }
-
     return ret;
 }
 

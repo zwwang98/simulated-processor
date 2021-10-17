@@ -14,11 +14,6 @@ InternalThread::InternalThread(void* (*func)(void*), void* arg) {
     this->func = func;
     this->arg = arg;
     externalThread = NULL;
-    pthread_mutex_init(&sleepMutex, NULL);
-    pthread_mutex_init(&stateMutex, NULL);
-    pthread_mutex_init(&signalMutex, NULL);
-    pthread_mutex_init(&stopExecutionMutex, NULL);
-    pthread_cond_init(&stopExecutionCond, NULL);
     currentState = CREATED;
 }
 
@@ -33,18 +28,18 @@ InternalThread::InternalThread(void* (*func)(void*),
 InternalThread::~InternalThread() {}
 
 State InternalThread::getState() {
-    pthread_mutex_lock(&stateMutex);
+    stateMutex.lock();
     State ret = currentState;
-    pthread_mutex_unlock(&stateMutex);
+    stateMutex.unlock();
     return ret;
 }
 
 void InternalThread::setState(State newState) {
-    pthread_mutex_lock(&stateMutex);
+    stateMutex.lock();
     currentState = newState;
     if (externalThread != NULL)
         externalThread->state = newState;
-    pthread_mutex_unlock(&stateMutex);
+    stateMutex.unlock();
 }
 
 void InternalThread::runningSigFunc(int sig) {
@@ -73,28 +68,30 @@ void InternalThread::runningSigFunc(int sig) {
             int ret = sigwait(&sigSet, &sig);
             if (ret == 0 && sig == SIGUSR2) {
                 setState(RUNNING);
-                pthread_mutex_lock(&stopExecutionMutex);
-                pthread_cond_signal(&stopExecutionCond);
-                pthread_mutex_unlock(&stopExecutionMutex);
+                stopExecutionMutex.lock();
+                stopExecutionCond.notify_one();
+                stopExecutionMutex.unlock();
                 cont = false;
             }
         }
     }
 }
 
-void InternalThread::exit() {
-    terminated();
-    pthread_exit(NULL);
+bool InternalThread::joinWithTimeout() {
+    try {
+        return currentThread->try_join_for(boost::chrono::microseconds(MICROSECONDS_TICK));
+    } catch (boost::thread_interrupted e) {
+        return false;
+    }
 }
 
-int InternalThread::joinWithTimeout() {
-    return pthread_timedjoin_np(thread, NULL, &THREAD_JOIN_TIMEOUT);
-}
-
-// Yes, good work searching for "point" but there are none in this file.
-
-int InternalThread::join() {
-    return pthread_join(thread, NULL);
+bool InternalThread::join() {
+    try {
+        currentThread->join();
+    } catch (boost::thread_interrupted e) {
+        return false;
+    }
+    return true;
 }
 
 void InternalThread::terminated() {
@@ -111,7 +108,7 @@ void InternalThread::sendSignal(int sig, State waitForState) {
         InternalLogger::getLogger().flush();
     }
     ThreadManager::threadToSignal = this;
-    pthread_kill(thread, sig);
+    pthread_kill(currentThread->native_handle(), sig);
     State state = getState();
     while (state != waitForState) {
         usleep(MICROSECONDS_TICK);
@@ -140,7 +137,7 @@ void InternalThread::pause() {
 
 void InternalThread::start() {
     setState(RUNNING);
-    pthread_create(&thread, NULL, &InternalThread::startThread, this);
+    currentThread = new boost::thread(&InternalThread::startThread, this);
 }
 
 void InternalThread::resume() {
@@ -153,9 +150,8 @@ void* InternalThread::startThread(void* thread) {
 }
 
 void InternalThread::stopExecution() {
-    pthread_mutex_lock(&stopExecutionMutex);
-    pthread_cond_wait(&stopExecutionCond, &stopExecutionMutex);
-    pthread_mutex_unlock(&stopExecutionMutex);
+    std::unique_lock<std::mutex> lock(stopExecutionMutex);
+    stopExecutionCond.wait(lock);
 }
 
 Thread* InternalThread::getExternalThread() {

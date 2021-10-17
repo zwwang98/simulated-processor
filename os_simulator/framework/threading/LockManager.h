@@ -1,9 +1,9 @@
 #ifndef FRAMEWORK_LOCKMANAGER_H
 #define FRAMEWORK_LOCKMANAGER_H
 
-#include <pthread.h>
 #include <uuid/uuid.h>
 #include <map>
+#include <mutex>
 #include "Lock.h"
 
 using namespace std;
@@ -13,7 +13,7 @@ class LockManager {
     friend class Threading::ThreadManager;
 
    private:
-    map<const char*, pthread_mutex_t*> locks;
+    map<const char*, boost::mutex*> locks;
     LockManager();
     ~LockManager();
     static LockManager* singleton;

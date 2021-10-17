@@ -19,7 +19,7 @@ void* ThreadManager::startIdleThread(ThreadManager* threadManager) {
 
 ThreadManager::ThreadManager() {
     tick = 0;
-    idleThread = shared_ptr<InternalThread>(
+    idleThread = std::shared_ptr<InternalThread>(
         new InternalThread((void* (*)(void*)) & startIdleThread, this));
     pthread_mutex_init(&runningThreadMutex, NULL);
     pthread_mutex_init(&shutdownMutex, NULL);
@@ -51,7 +51,7 @@ void ThreadManager::start() {
     }
 }
 
-void ThreadManager::setRunningThread(shared_ptr<InternalThread> running) {
+void ThreadManager::setRunningThread(std::shared_ptr<InternalThread> running) {
     pthread_mutex_lock(&runningThreadMutex);
     runningThread = running;
     pthread_mutex_unlock(&runningThreadMutex);
@@ -75,7 +75,7 @@ void* ThreadManager::idleFunc() {
             pthread_mutex_unlock(&threadMappingMutex);
             usleep(MICROSECONDS_TICK);
         } else {
-            shared_ptr<InternalThread> currentThread = threadMapping[newThread];
+            std::shared_ptr<InternalThread> currentThread = threadMapping[newThread];
             switch (currentThread->getState()) {
                 case CREATED: {
                     setRunningThread(currentThread);
@@ -107,14 +107,7 @@ void* ThreadManager::idleFunc() {
                     break;
                 }
             }
-            int status = currentThread->joinWithTimeout();
-            if (InternalLogger::getLogger().isVerbose()) {
-                InternalLogger::eventSink()
-                    << "[ThreadManager] "
-                    << "Status of thread " << newThread->name << " is "
-                    << status << "\n";
-                InternalLogger::getLogger().flush();
-            }
+            bool status = currentThread->joinWithTimeout();
             setRunningThread(idleThread);
             if (InternalLogger::getLogger().isVerbose()) {
                 InternalLogger::eventSink()
@@ -122,7 +115,7 @@ void* ThreadManager::idleFunc() {
                     << "End of cycle for thread " << newThread->name << "\n";
                 InternalLogger::getLogger().flush();
             }
-            if (status == ETIMEDOUT || status == EBUSY) {
+            if (!status) {
                 if (InternalLogger::getLogger().isVerbose()) {
                     InternalLogger::eventSink()
                         << "[ThreadManager] "
@@ -136,7 +129,7 @@ void* ThreadManager::idleFunc() {
                                                 << newThread->name << "\n";
                     InternalLogger::getLogger().flush();
                 }
-            } else if (status == 0) {
+            } else {
                 if (InternalLogger::getLogger().isVerbose()) {
                     InternalLogger::eventSink()
                         << "[ThreadManager] "
@@ -161,7 +154,7 @@ bool ThreadManager::areAllThreadsTerminated() {
             << "Checking if all threads are terminated\n";
         InternalLogger::getLogger().flush();
     }
-    for (map<Thread*, shared_ptr<InternalThread>>::iterator iter =
+    for (map<Thread*, std::shared_ptr<InternalThread>>::iterator iter =
              threadMapping.begin();
          iter != threadMapping.end(); iter++) {
         if (iter->second->getState() != TERMINATED)
@@ -189,7 +182,7 @@ ThreadManager* ThreadManager::getInstance() {
     return ThreadManager::singleton;
 }
 
-shared_ptr<InternalThread> ThreadManager::currentThread() {
+std::shared_ptr<InternalThread> ThreadManager::currentThread() {
     return runningThread;
 }
 
@@ -199,7 +192,7 @@ void ThreadManager::sleepCurrentThread() {
 
 void ThreadManager::createThread(Thread* thread) {
     pthread_mutex_lock(&threadMappingMutex);
-    threadMapping[thread] = shared_ptr<InternalThread>(
+    threadMapping[thread] = std::shared_ptr<InternalThread>(
         new InternalThread(thread->func, thread->arg, thread));
     pthread_mutex_unlock(&threadMappingMutex);
 }
