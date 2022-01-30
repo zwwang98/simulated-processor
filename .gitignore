@@ -7,3 +7,5 @@ CMakeCache.txt
 CMakeFiles/
 *.a
 project2_threading
+.cmake/
+Testing/

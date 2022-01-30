@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.19.2)
 project(project2_threading)
 if(CMAKE_SYSTEM_NAME MATCHES Linux)
   execute_process(COMMAND dpkg -l git uuid-dev build-essential cmake libboost1.71-tools-dev
@@ -27,6 +27,10 @@ if(result)
   message(FATAL_ERROR "Build step for googletest failed: ${result}")
 endif()
 
+if(CMAKE_SYSTEM_NAME MATCHES Darwin)
+  set (BUILD_ARGS "architecture=combined cxxflags=\"-arch x86_64 -arch arm64\"")
+endif()
+
 configure_file(CMakeLists.txt.in ext/boost/download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
         RESULT_VARIABLE result
@@ -47,8 +51,10 @@ include_directories(. os_simulator/includes os_simulator/framework test answer $
 set(SOURCE_FILES
     test/main.cpp
     test/test_helper.cpp
-    answer/lock.cpp
-    answer/thread.cpp)
+    test/test_helper.h
+    answer/thread.cpp
+    answer/thread_lock.h
+    answer/test_config.h answer/lock.cpp)
 
 link_directories(${CMAKE_BINARY_DIR}/ext/boostinstall/lib)
 add_executable(project2_threading ${SOURCE_FILES})
