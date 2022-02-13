@@ -138,8 +138,8 @@ Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
 
 1. Install Docker Desktop from https://www.docker.com/products/docker-desktop
 2. I have provided a https://course.ccs.neu.edu/cs5600sp22/downloads/project2.tar.gz
-3. Run  ```shell docker load -i  <file_you_downloaded>```
-4. Run ```shell docker images```, you should see something like this<br>
+3. Run  ```docker load -i  <file_you_downloaded>```
+4. Run ```docker images```, you should see something like this<br>
 ![Alt text](images/docker_images.png "Title")
 5. You should be able to add that image to CLion and run it within Docker there by following instructions here: 
 https://www.jetbrains.com/help/clion/clion-toolchains-in-docker.html#create-docker-toolchain
@@ -147,7 +147,7 @@ https://www.jetbrains.com/help/clion/clion-toolchains-in-docker.html#create-dock
 ![Alt text](images/docker_toolchain.png "Title")
 7. Your CMake config should look like: <br>
 ![Alt text](images/docker_cmake.png "Title")
-8. You should be able to run this from CLion or find the container it creates by running ```shell docker ps-a``` 
+8. You should be able to run this from CLion or find the container it creates by running ```docker ps-a``` 
 after you build.
 
 #### On All Platforms
