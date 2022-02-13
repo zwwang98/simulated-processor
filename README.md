@@ -7,14 +7,6 @@ slices of approximately 50μs and switches threads each slice to simulate
 interrupt-driven process scheduling. Your task is to implement scheduling,
 sleep, and priority donation.
 
-## KNOWN ISSUES
-
-1. The simulator does not work reliably when run on VMs with multiple cores.
-   Note that the VirtualBox default is one core.
-2. The simulator does not work under WSL on multi-core systems. This is likely
-   related to the other multi-core issue but the failure rate is 100% on WSL
-   and only 50% on a four-core VirtualBox system.
-
 ## STOP HERE
 
 This assignment is _significantly_ more difficult than the first assignment. It
@@ -23,17 +15,7 @@ multithreaded applications you will have a great deal of trouble doing so.
 
 As you saw in assignment 1, the compiler will not help you as much as you would
 like. In order to keep you from going too far in a bad direction, this
-assignment contains several directions that _must_ be followed exactly. To help
-encourage everyone to read every comment and every document, there are
-incentives in a few places. For example, when you submit this assignment for
-grading, mention a sequel - book, movie, game, anything goes - in the title for
-one bonus point.
-
-The negative incentives are clearly spelled out and are not meant as traps. The
-bonus points, being positives, are deliberately obnoxious to find. Your time is
-better spent reading documentation. Please do not share the location of the
-points with others in the class. All of the bonus points are questions or
-phrases that must be answered/placed in the issue you submit for grading.
+assignment contains several directions that _must_ be followed exactly.
 
 Before you write any code, review `answer/QUESTIONS.md` and keep it in mind as
 you design a solution. You should be able to fill it out as you write your
@@ -62,7 +44,6 @@ before continuing.
   - Two tests have been disabled **AND MUST BE RE-ENABLED BEFORE GRADING**
   - For more details, read `answer/QUESTIONS.md`
 - Ensure that your solution passes all of the included tests
-- Ensure that your solution does not leak any memory
 - Ensure that your solution is _cleanly formatted_ and _well-documented_ as the
   tests are a smaller part of your grade than before
 - No, seriously, look at `answer/QUESTIONS.md` early and often
@@ -77,9 +58,6 @@ before continuing.
   - a `.clang-format` configuration file has been provided
   - `sudo apt install -y clang-format` in your Ubuntu machine
   - `clang-format -i <one or more files>` to format them in place
-  - No exceptions this time around, apologies
-  - You can configure VS Code and CLion to match this code style by importing
-    the Chromium definitions
 - Your code must compile without compiler warnings or errors
 - Your code must be C, not C++
   - The simulator is C++ so your code must abide by some C++ conventions
@@ -100,8 +78,7 @@ before continuing.
 The current implementation is first come first serve. Modify it so that threads
 of higher priority get scheduled first; threads of equal priority should be
 scheduled round-robin. The highest, lowest, and default priorities are defined
-in `os_simulator/includes/Thread.h`. Mention the lowest priority for an equal
-value added to your final marks.
+in `os_simulator/includes/Thread.h`.
 
 **HINT:** Scheduling is controlled by `nextThreadToRun`; make sure it provides the correct thread in order to set the correct overall schedule.
 
@@ -115,9 +92,15 @@ Sleep is not currently implemented. You will need to write it so that threads th
 
 Implement this feature. Remember that a thread may raise or lower its priority at any time.
 
-Donation helps to address priority inversion. Imagine three threads - High, Medium, and Low - with matching priority. Low holds a lock; High wants the lock. Even though High is higher priority, it will never run as Medium will be scheduled over Low, so Low will never get the time to release its lock. However, if High donates some priority to Low, Low can get scheduled and release the lock at which point High immediately acquires it and then recalls the priority it donated.
+Donation helps to address priority inversion. Imagine three threads - High, Medium, and Low - with matching priority. 
+Low holds a lock; High wants the lock. Even though High is higher priority, it will never run as Medium will be 
+scheduled over Low, so Low will never get the time to release its lock. However, if High donates some priority to Low, 
+Low can get scheduled and release the lock at which point High immediately acquires it and then recalls the priority it 
+donated.
 
-Your solution should handle multiple donation, in which multiple threads donate to a thread, and nested donation. Nested donation is needed when High needs a lock from Medium needs a lock from Low; Medium and Low both get boosted to High's priority.
+Your solution should handle multiple donation, in which multiple threads donate to a thread, and nested donation. 
+Nested donation is needed when High needs a lock from Medium needs a lock from Low; Medium and Low both get boosted to 
+High's priority.
 
 ### Tips
 
@@ -136,12 +119,36 @@ Your solution should handle multiple donation, in which multiple threads donate 
 ### Building and Testing
 
 #### On Mac
-This project will build on Mac, you will need to install homebrew already if you haven't. You can find instructions here: https://brew.sh/
+This project will build on Mac, you will need to install homebrew already if you haven't. You can find instructions 
+here: https://brew.sh/
 
 Once done run the following command
 ```shell
 brew install boost-build
 ```
+
+#### Running With Docker
+This code will run natively on OSX (Intel and M1) and Linux. On Windows you will have to run with Docker. You can choose 
+to use docker on OSX or Linux if you like but it is slower than native.
+
+On Windows you will have to run the following in order to enable Docker.
+```shell
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+```
+
+1. Install Docker Desktop from https://www.docker.com/products/docker-desktop
+2. I have provided a https://course.ccs.neu.edu/cs5600sp22/downloads/project2.tar.gz
+3. Run  ```shell docker load -i  <file_you_downloaded>```
+4. Run ```shell docker images```, you should see something like this<br>
+![Alt text](images/docker_images.png "Title")
+5. You should be able to add that image to CLion and run it within Docker there by following instructions here: 
+https://www.jetbrains.com/help/clion/clion-toolchains-in-docker.html#create-docker-toolchain
+6. Your toolchain should look like: <br>
+![Alt text](images/docker_toolchain.png "Title")
+7. Your CMake config should look like: <br>
+![Alt text](images/docker_cmake.png "Title")
+8. You should be able to run this from CLion or find the container it creates by running ```shell docker ps-a``` 
+after you build.
 
 #### On All Platforms
 You should run the following next. Keep in mind cmake will take a long time as it has to download and build all of boost.
@@ -180,7 +187,6 @@ git clean -fdx
 - 25% - correct code
 - 25% - QUESTIONS.md
 - 10% - consistent code style
-- ??% - additional hidden points
 
 #### "correct code"
 
@@ -302,9 +308,3 @@ programmer doesn't understand how C handles value types.
 
 Only code that both works and demonstrates understanding will be considered
 correct; this includes managing memory.
-
-## Experimental WSL + VS Code Support
-
-WSL is doing something odd with threading that breaks this project. After two
-hours of digging I had to move on; I will revisit it later but for now assume
-that WSL is not safe to use for this project.

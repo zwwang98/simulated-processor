@@ -14,8 +14,6 @@ your answer. Your submission should not include **any** instances of
 `ANSWER_BEGIN` or `ANSWER_END`; the text provided is meant to give you some tips
 on how to begin answering.
 
-For one point, remember to delete this section (Directions) before submitting.
-
 ## Scheduling
 
 **Two tests have infinite loops with the scheduler you were provided. Explain
