@@ -8,8 +8,11 @@
 #include "Thread.h"
 #include "thread_lock.h"
 
+
+// invariant: readyList is sorted by priority in descending order
 const char* readyList = NULL;
 
+// return true if v1->priority is greater than v2->prioirty
 bool priorityCompare(void *v1, void *v2) {
     Thread *t1 = (Thread *) v1;
     Thread *t2 = (Thread *) v2;
@@ -20,6 +23,8 @@ bool priorityCompare(void *v1, void *v2) {
     return t1->priority > t2->priority;
 }
 
+// PRECONDITION: readyList has been initialized
+// POSTCONDITION: readyList is sorted by priority (descending)
 Thread* createAndSetThreadToRun(const char* name,
                                 void* (*func)(void*),
                                 void* arg,
@@ -44,7 +49,7 @@ Thread* createAndSetThreadToRun(const char* name,
     // verboseLog(line);
 
     // this way whenever a new thread is added, the thread at index 0 will always be the one with the highest priority
-    // sortList(readyList, priorityCompare);
+    sortList(readyList, priorityCompare);
     return ret;
 }
 
@@ -53,32 +58,8 @@ void destroyThread(Thread* thread) {
     free(thread);
 }
 
-/**
- * @brief 
- * 
- * @param currentTick 
- * @return Thread* 
- */
-int getHighestPriorityThreadIndex() {
-    if (listSize(readyList) == 0) {
-        return -1;
-    }
-    // readyList contains at least one thread
-    int index = 0; // highest priority thread's index so far
-    Thread *thread = ((Thread*)listGet(readyList, index));
-    int highestPriority = thread->priority;
-
-    for (int i = 1; i < listSize(readyList); i++ ) {
-        thread = ((Thread*)listGet(readyList, i));
-        if (thread->priority > highestPriority) {
-            index = i;
-            highestPriority = thread->priority;
-        }
-    }
-
-    return index;
-}
-
+// PRECONDITION: readyList is sorted by priority in descending order
+// POSTCONDITION: all terminated threads have been removed
 Thread* nextThreadToRun(int currentTick) {
     char line[1024];
     if (listSize(readyList) == 0)
@@ -103,6 +84,7 @@ Thread* nextThreadToRun(int currentTick) {
     return ret;
 }
 
+// POSTCONDITION: readyList has been initialized
 void initializeCallback() {
     readyList = createNewList();
 }
@@ -113,4 +95,12 @@ void shutdownCallback() {
 
 int tickSleep(int numTicks) {}
 
-void setMyPriority(int priority) {}
+// POSTCONDITION: readyList is sorted by priority (descending)
+void setMyPriority(int priority) {
+    Thread *thread = getCurrentThread();
+    thread->priority = priority;
+
+    // With the precondition that readyList is always sorted
+    // in descending order, we must sort readyList here
+    sortList(readyList, priorityCompare);
+}
