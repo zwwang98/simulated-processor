@@ -18,6 +18,13 @@ void* multiply(void* arg) {
 void* recordThreadPriority(void* arg) {
     char line[1024];
     PriorityInfoList* infoList = (PriorityInfoList*)arg;
+
+    sprintf(line, "[recordThreadPriority] wzw numberThreadsStarted = %d, line %d\n", *(infoList->numThreadsStarted), __LINE__);
+    verboseLog(line);
+
+    // https://www.cprogramming.com/reference/preprocessor/__LINE__.html#:~:text=__LINE__%20is%20a,or%20when%20writing%20debugging%20code.
+    // __LINE__ - the current line number in source file
+    // so the __LINE__ below will lead to a "25" in log
     sprintf(line, "[recordThreadPriority] %d:%s:numThreadsStarted = %d\n",
             __LINE__, getCurrentThread()->name, *(infoList->numThreadsStarted));
     verboseLog(line);
@@ -27,12 +34,20 @@ void* recordThreadPriority(void* arg) {
             __LINE__, getCurrentThread()->name, *(infoList->numThreadsStarted));
     verboseLog(line);
     if (tcbi) {
+
+        sprintf(line, "tcbi is not null, and its name is %s\n", tcbi->threadName);
+        verboseLog(line);
+
         pthread_mutex_lock(&(infoList->varMemLock));
         (*(infoList->numThreadsStarted))++;
         pthread_mutex_unlock(&(infoList->varMemLock));
         createAndSetThreadToRun(tcbi->threadName, tcbi->func, tcbi->arg,
                                 tcbi->pri);
     } else {
+
+        sprintf(line, "tcbi is null\n");
+        verboseLog(line);
+
         pthread_mutex_lock(&(infoList->varMemLock));
         sprintf(line, "[recordThreadPriority] %d:%s:numThreadsStarted = %d\n",
                 __LINE__, getCurrentThread()->name,
@@ -54,6 +69,10 @@ void* recordThreadPriority(void* arg) {
         stopExecutingThreadForCycle();
         pthread_mutex_lock(&(infoList->varMemLock));
         cont = *(infoList->cont);
+
+        sprintf(line, "[recordThreadPriority] %d: in while loop\n", __LINE__);
+        verboseLog(line);
+        
         pthread_mutex_unlock(&(infoList->varMemLock));
     }
     stopExecutingThreadForCycle();

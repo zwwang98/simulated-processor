@@ -21,6 +21,41 @@ why `Running.PriorityOrder` will never terminate with the basic scheduler.**
 
 ANSWER_BEGIN
 
+??? Why with the basic scheduler, the Lo Pri Thread never teminates? I found that it has something to do with the piece of code below. It looks like we always get `status` as `false`. But why is that case?
+```C++
+bool status = currentThread->joinWithTimeout();
+setRunningThread(idleThread);
+if (InternalLogger::getLogger().isVerbose()) {
+    InternalLogger::eventSink()
+        << "[ThreadManager] "
+        << "End of cycle for thread " << newThread->name << "\n";
+    InternalLogger::getLogger().flush();
+}
+if (!status) {
+    if (InternalLogger::getLogger().isVerbose()) {
+        InternalLogger::eventSink()
+            << "[ThreadManager] "
+            << "Pausing thread " << newThread->name << "\n";
+        InternalLogger::getLogger().flush();
+    }
+    currentThread->pause();
+    if (InternalLogger::getLogger().isVerbose()) {
+        InternalLogger::eventSink() << "[ThreadManager] "
+                                    << "Successfully paused thread "
+                                    << newThread->name << "\n";
+        InternalLogger::getLogger().flush();
+    }
+} else {
+    if (InternalLogger::getLogger().isVerbose()) {
+        InternalLogger::eventSink()
+            << "[ThreadManager] "
+            << "Terminating thread " << newThread->name << "\n";
+        InternalLogger::getLogger().flush();
+    }
+    currentThread->terminated();
+}
+```
+
 If this question doesn't make sense at all, take a look at `test_config.h`.
 
 Turning on verbose logging and reading it will help answer this question.
