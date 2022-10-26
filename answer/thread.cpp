@@ -118,7 +118,7 @@ void shutdownCallback() {
 // 1. the current thread has been paused
 // 2. the current thread will not be woken up until numTicks have passed
 int tickSleep(int numTicks) {
-    Thread *thread = getCurrentThread();
+    Thread *curThread = getCurrentThread();
     // PRECONDITION: the first thread in readyList must be
     // the current running thread returned by getCurrentThread()
     removeFromListAtIndex(readyList, 0);
@@ -126,8 +126,8 @@ int tickSleep(int numTicks) {
     // 1.calculate the expected end tick
     // 2.
     int startTick = getCurrentTick();
-    int expectedEndTick = startTick + numTicks;
-    PUT_IN_MAP(int, sleepMap, expectedEndTick, (void*)thread);
+    int endTick = startTick + numTicks;
+    PUT_IN_MAP(int, sleepMap, endTick, (void*)curThread);
 
     stopExecutingThreadForCycle();
 

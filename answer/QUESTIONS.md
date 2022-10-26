@@ -64,14 +64,18 @@ ANSWER_END
 
 ## Sleep
 
-**Briefly describe what happens in your `sleep(...)` function.**
+**Briefly describe what happens in your `tickSleep(int numTicks)` function.**
 
 ANSWER_BEGIN
-
-1. A list of
-2. Numbered steps in
-3. Plain English will be fine
-4. Not too many steps.
+1. pull current running thread `curThread` out of `readyList`
+2. get current tick as the "sleep-is-supposed-to-start" tick - `startTick`
+3. calculate expected end-sleep tick `endTick` by `startTick + numTicks` 
+4. store the extracted thread into `sleepMap` with a key of expected end-sleep tick  
+   ```C++
+    PUT_IN_MAP(int, sleepMap, endTick, (void*)curThread);
+   ```
+   `sleepMap`'s key is the tick, `sleepMap`'s value is the thread need to resume at given tick
+5. call `stopExecutingThreadForCycle()` to `PAUSE` the thread
 
 ANSWER_END
 
@@ -80,19 +84,25 @@ ANSWER_END
 ANSWER_BEGIN
 
 What prevents a thread from waking up too early?
+1. As I have explained above, an asleep thread will be moved out from `readyList` and it will never be added into `readyList` again until its expected awake tick reaches
+2. In our `nextThreadToRun()`, the sheduler fetches ready-to-run threads from `readyList`. Since we do not put asleep threads in `readyList`, those asleep threads are prevented from waking up too early.
 
 What prevents a thread from _never_ waking up?
+1. When ask a thread to sleep, we extract the thread out of `readyList` and `PAUSE` it. We also store this thread with the key of its expected woken tick in `sleepMap`.
+2. At each tick, we utilize `sleepMap` to check if there is any thread to be woken. If so, put them back into `readyList` so that these woken threads will eventually be scheduled.  
+3. Since all woken threads are added to `readyList` again, they all will eventyally be schedulled, which means they will eventually wake up.
 
 ANSWER_END
 
 **Do you have to check every sleeping thread every tick? Why not?**
 
-ANSWER_BEGIN
-
 You shouldn't have to check every thread every tick.
 
-You should be able to take advantage of knowing how long a thread will sleep
-when `sleep(...)` is called.
+You should be able to take advantage of knowing how long a thread will sleep when `sleep(...)` is called.
+
+ANSWER_BEGIN
+
+No. Because with the help of `sleepMap`, we only need to check if the `sleepMap` contains current tick as a key. If so, it means we need to wake up some threads.
 
 ANSWER_END
 
