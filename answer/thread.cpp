@@ -5,12 +5,20 @@
 #include <iostream>
 
 #include "List.h"
+#include "Map.h"
 #include "Thread.h"
 #include "thread_lock.h"
 
 
 // invariant: readyList is sorted by priority in descending order
 const char* readyList = NULL;
+
+/*
+* Map's key: int, tick.
+* Map's value: thread to resume at that tick.
+* todo: what if we have more than one threads to resume at certain tick? Looks like we need a list for the val.
+*/
+const char* sleepMap = NULL;
 
 // return true if v1->priority is greater than v2->prioirty
 bool priorityCompare(void *v1, void *v2) {
@@ -62,6 +70,18 @@ void destroyThread(Thread* thread) {
 // POSTCONDITION: all terminated threads have been removed
 Thread* nextThreadToRun(int currentTick) {
     char line[1024];
+
+    // if there is any thread to resume at currentTick,
+    // extract them from sleepMap and add them into readyList
+    bool needResumeThread = MAP_CONTAINS(int, sleepMap, currentTick);
+    if (needResumeThread) {
+        Thread *threadToResume = (Thread *) REMOVE_FROM_MAP(int, sleepMap, currentTick);
+        sprintf(line, "[nextThreadToRun] add thread %s from sleepMap to readyList\n", threadToResume->name);
+        verboseLog(line);
+        addToList(readyList, threadToResume);
+        sortList(readyList, priorityCompare);
+    }
+
     if (listSize(readyList) == 0)
         return NULL;
     Thread* ret = NULL;
@@ -87,13 +107,32 @@ Thread* nextThreadToRun(int currentTick) {
 // POSTCONDITION: readyList has been initialized
 void initializeCallback() {
     readyList = createNewList();
+    sleepMap = CREATE_MAP(int);
 }
 
 void shutdownCallback() {
     destroyList(readyList);
 }
 
-int tickSleep(int numTicks) {}
+// POSTCONDITION:
+// 1. the current thread has been paused
+// 2. the current thread will not be woken up until numTicks have passed
+int tickSleep(int numTicks) {
+    Thread *thread = getCurrentThread();
+    // PRECONDITION: the first thread in readyList must be
+    // the current running thread returned by getCurrentThread()
+    removeFromListAtIndex(readyList, 0);
+
+    // 1.calculate the expected end tick
+    // 2.
+    int startTick = getCurrentTick();
+    int expectedEndTick = startTick + numTicks;
+    PUT_IN_MAP(int, sleepMap, expectedEndTick, (void*)thread);
+
+    stopExecutingThreadForCycle();
+
+    return startTick;
+}
 
 // POSTCONDITION: readyList is sorted by priority (descending)
 void setMyPriority(int priority) {

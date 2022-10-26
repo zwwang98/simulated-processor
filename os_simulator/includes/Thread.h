@@ -22,9 +22,9 @@ const int DEFAULT_PRI = 5;
  * Represents a thread.
  *
  * @param name The name of a thread.
- * @priority The priority of a thread, minimum priority is 1, max is 10, default
+ * @param priority The priority of a thread, minimum priority is 1, max is 10, default
  * is 5
- * @func The function to run when starting the thread, this function returns a
+ * @param func The function to run when starting the thread, this function returns a
  * void* and takes a void*. This is required because pthread takes this as its
  * argument to start a thread.
  * @param arg The argument to pass to the function that starts the thread.
