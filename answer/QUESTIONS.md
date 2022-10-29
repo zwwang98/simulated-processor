@@ -115,6 +115,9 @@ ANSWER_BEGIN
 
 This is similar to how you should be handling `sleep(...)`ing threads.
 
+1. The `readyList` is always sorted by priority in descending order
+2. So in the `nextThreadToRun()` method, the thread with the highest priority will always get scheduled first, which means it will get the lock first.
+
 ANSWER_END
 
 ## Priority Donation
