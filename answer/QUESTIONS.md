@@ -144,3 +144,7 @@ ANSWER_BEGIN
 Apply your previous answer to your code.
 
 ANSWER_END
+
+### Bonus Points
+1. In `Thread.h`, the comments of method `void stopExecutingThreadForCycle();`.
+2. 

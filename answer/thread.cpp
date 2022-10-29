@@ -13,12 +13,20 @@
 // invariant: readyList is sorted by priority in descending order
 const char* readyList = NULL;
 
-/*
-* Map's key: int, tick.
-* Map's value: thread to resume at that tick.
-* todo: what if we have more than one threads to resume at certain tick? Looks like we need a list for the val.
-*/
-const char* sleepMap = NULL;
+/**
+ * @brief The map stores information about asleep threads and when each thread should wake up
+ * Map's key: int, tick.
+ * Map's value: thread to resume at that tick.
+ * todo: what if we have more than one threads to resume at certain tick? Looks like we need a list for the val.
+ */
+const char* wokentickToThreads = NULL;
+
+/**
+ * @brief The map stores information about locks and which thread each lock is held by.
+ * Map's key: char*, which is the given type for generated lockId
+ * Map's value: the thread holding the key/lock, if no thread is holding the key/lock, it should be NULL
+ */
+const char* lockToThreadMap = NULL;
 
 // return true if v1->priority is greater than v2->prioirty
 bool priorityCompare(void *v1, void *v2) {
@@ -72,18 +80,20 @@ Thread* nextThreadToRun(int currentTick) {
     char line[1024];
 
     // if there is any thread to resume at currentTick,
-    // extract them from sleepMap and add them into readyList
-    bool needResumeThread = MAP_CONTAINS(int, sleepMap, currentTick);
+    // extract them from wokentickToThreads and add them into readyList
+    bool needResumeThread = MAP_CONTAINS(int, wokentickToThreads, currentTick);
     if (needResumeThread) {
-        Thread *threadToResume = (Thread *) REMOVE_FROM_MAP(int, sleepMap, currentTick);
-        sprintf(line, "[nextThreadToRun] add thread %s from sleepMap to readyList\n", threadToResume->name);
+        Thread *threadToResume = (Thread *) REMOVE_FROM_MAP(int, wokentickToThreads, currentTick);
+        sprintf(line, "[nextThreadToRun] add thread %s from wokentickToThreads to readyList\n", threadToResume->name);
         verboseLog(line);
         addToList(readyList, threadToResume);
         sortList(readyList, priorityCompare);
     }
 
-    if (listSize(readyList) == 0)
+    if (listSize(readyList) == 0) {
         return NULL;
+    }
+        
     Thread* ret = NULL;
     do {
         // choose 0 based on the assumption that our thread list is always sorted in descending order of priority
@@ -107,11 +117,16 @@ Thread* nextThreadToRun(int currentTick) {
 // POSTCONDITION: readyList has been initialized
 void initializeCallback() {
     readyList = createNewList();
-    sleepMap = CREATE_MAP(int);
+    wokentickToThreads = CREATE_MAP(int);
+    // The type 
+    lockToThreadMap = CREATE_MAP(const char*);
 }
 
 void shutdownCallback() {
     destroyList(readyList);
+    // todo: do I need to call free() explicitly on both maps?
+    // free(&wokentickToThreads);
+    // free(&lockMap);
 }
 
 // POSTCONDITION:
@@ -127,7 +142,7 @@ int tickSleep(int numTicks) {
     // 2.
     int startTick = getCurrentTick();
     int endTick = startTick + numTicks;
-    PUT_IN_MAP(int, sleepMap, endTick, (void*)curThread);
+    PUT_IN_MAP(int, wokentickToThreads, endTick, (void*)curThread);
 
     stopExecutingThreadForCycle();
 

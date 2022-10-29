@@ -106,12 +106,18 @@ void* sleepTest(void* arg) {
 }
 
 void* simpleLock(void* arg) {
+    char line[1024];
     const char* lockId = createLock();
 
     lock(lockId);
     Thread* lockHoldingThread = getThreadHoldingLock(lockId);
     if (lockHoldingThread) {
+        sprintf(line, "[simpleLock] is not null\n");
+        verboseLog(line);
         memcpy(arg, lockHoldingThread, sizeof(Thread));
+    } else {
+        sprintf(line, "[simpleLock] is null\n");
+        verboseLog(line);
     }
 
     unlock(lockId);

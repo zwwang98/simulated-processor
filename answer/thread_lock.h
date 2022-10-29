@@ -8,6 +8,9 @@
 
 // extern const char *sharedMap;
 
+extern const char* lockToThreadMap;
+extern const char* wokentickToThreads;
+
 // Then in ONE OF lock.cpp or thread.cpp you would write
 
 // const char *sharedMap = CREATE_MAP(const char*);
