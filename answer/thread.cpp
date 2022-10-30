@@ -65,7 +65,7 @@ Thread* createAndSetThreadToRun(const char* name,
     // verboseLog(line);
 
     // this way whenever a new thread is added, the thread at index 0 will always be the one with the highest priority
-    sortList(readyList, priorityCompare);
+    // sortList(readyList, priorityCompare);
     return ret;
 }
 
@@ -109,7 +109,6 @@ Thread* nextThreadToRun(int currentTick) {
             removeFromList(readyList, ret);
             ret = NULL;
         }
-
     } while (listSize(readyList) > 0 && ret == NULL);
     return ret;
 }

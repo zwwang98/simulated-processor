@@ -21,40 +21,10 @@ why `Running.PriorityOrder` will never terminate with the basic scheduler.**
 
 ANSWER_BEGIN
 
-??? Why with the basic scheduler, the Lo Pri Thread never teminates? I found that it has something to do with the piece of code below. It looks like we always get `status` as `false`. But why is that case?
-```C++
-bool status = currentThread->joinWithTimeout();
-setRunningThread(idleThread);
-if (InternalLogger::getLogger().isVerbose()) {
-    InternalLogger::eventSink()
-        << "[ThreadManager] "
-        << "End of cycle for thread " << newThread->name << "\n";
-    InternalLogger::getLogger().flush();
-}
-if (!status) {
-    if (InternalLogger::getLogger().isVerbose()) {
-        InternalLogger::eventSink()
-            << "[ThreadManager] "
-            << "Pausing thread " << newThread->name << "\n";
-        InternalLogger::getLogger().flush();
-    }
-    currentThread->pause();
-    if (InternalLogger::getLogger().isVerbose()) {
-        InternalLogger::eventSink() << "[ThreadManager] "
-                                    << "Successfully paused thread "
-                                    << newThread->name << "\n";
-        InternalLogger::getLogger().flush();
-    }
-} else {
-    if (InternalLogger::getLogger().isVerbose()) {
-        InternalLogger::eventSink()
-            << "[ThreadManager] "
-            << "Terminating thread " << newThread->name << "\n";
-        InternalLogger::getLogger().flush();
-    }
-    currentThread->terminated();
-}
-```
+1. Method `nextThreadToRun()` is called by `ThreadManager` every tick to decide which thread to run at the tick.
+2. `readyList` stores all runnable threads
+3. In the basic scheduler, the `readyList` follows FIFO rule and we always pick the first thread to run, so we always run the `Lo Pri` thread.
+4. `Mi Pri` thread and `Hi Pri` thread are never scheduled, so we have a infinite loop. We start `Lo Pri` thread at tick 00001 and keep resuming `Lo Pri` thread at every following tick.
 
 If this question doesn't make sense at all, take a look at `test_config.h`.
 
