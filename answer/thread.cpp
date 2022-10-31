@@ -22,13 +22,25 @@ const char* readyList = NULL;
 const char* wokentickToThreads = NULL;
 
 /**
- * @brief The map stores information about locks and which thread each lock is held by.
- * Map's key: char*, which is the given type for generated lockId
- * Map's value: the thread holding the key/lock, if no thread is holding the key/lock, it should be NULL
+ * @brief A map whose key is lockId and the key's value is the thread holding the lock.
+ *        If no thread is holding the key/lock, the key's value should be NULL.
  */
 const char* lockToHoldingThread = NULL;
 
+/**
+ * @brief A map whose key is lockId and the key's value is a list of threads waiting for the lock.
+ */
+const char* lockToWaitingThreads = NULL;
 
+/**
+ * @brief A map whose key is a thread and the key's value is a list of locks the key is holding.
+ */
+const char* threadToHoldingLocks = NULL;
+
+/**
+ * @brief A map whose key is a thread and the key's value is the lock the key is waiting for.
+ */
+const char* threadToWaitingLock = NULL;
 
 // return true if v1->priority is greater than v2->prioirty
 bool priorityCompare(void *v1, void *v2) {
@@ -119,8 +131,11 @@ Thread* nextThreadToRun(int currentTick) {
 void initializeCallback() {
     readyList = createNewList();
     wokentickToThreads = CREATE_MAP(int);
-    // The type 
+    // The type must be exactly the same as lockId, which is const char *
     lockToHoldingThread = CREATE_MAP(const char*);
+    lockToWaitingThreads = CREATE_MAP(const char*);
+    threadToHoldingLocks = CREATE_MAP(Thread*);
+    threadToWaitingLock = CREATE_MAP(Thread*);
 }
 
 void shutdownCallback() {

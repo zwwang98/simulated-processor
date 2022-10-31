@@ -8,8 +8,15 @@
 
 // extern const char *sharedMap;
 
-extern const char* lockToHoldingThread;
+extern const char* readyList = createNewList();
 extern const char* wokentickToThreads;
+
+extern const char* lockToHoldingThread;
+extern const char* lockToWaitingThreads;
+extern const char* threadToHoldingLocks;
+extern const char* threadToWaitingLock;
+
+bool priorityCompare(void* v1, void* v2);
 
 // Then in ONE OF lock.cpp or thread.cpp you would write
 
