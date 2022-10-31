@@ -8,7 +8,7 @@
 
 // extern const char *sharedMap;
 
-extern const char* readyList = createNewList();
+extern const char* readyList;
 extern const char* wokentickToThreads;
 
 extern const char* lockToHoldingThread;
