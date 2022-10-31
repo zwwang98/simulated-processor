@@ -99,6 +99,13 @@ ANSWER_BEGIN
 Your answer should talk about the order of framework functions called and how
 priority donation opportunities are detected.
 
+1. The order of framework functions called
+   1. The current executing thread calls `lock(const char* lockId)` to lock a given lock `lockId`.
+   2. Inside the `lock(const char* lockId)` method, we invokes `lockAttempted(const char* lockId, Thread* thread)` first so that we could know if the given lock `lockId` is held by other thread, check priority donation and also to update the map `threadToWaitingLock` if needed
+
+2. How priority donation opportunities are detected  
+   Priprity donation opportunities are detected ruring `lockAttempted(const char* lockId, Thread* thread)`. When the `thread` finds that the `lockId` is held by another thread `holdingThread`, if the `holdingThread` has lower priority than `thread`, it means a priority donation is required to allow lower priority thread `holdingThread` to have chance to release the `lockId`.
+
 ANSWER_END
 
 **How is nested donation handled?**
@@ -106,6 +113,14 @@ ANSWER_END
 ANSWER_BEGIN
 
 Describe a system of three threads (A, B, C) and three locks (1, 2, 3).
+1. At the begining,
+   | Thread | Holding Locks | Priority |Request Locks|
+   |:------:|:-------------:|:--------:|:-----------:|
+   |   A    |       1       |    Lo    |             |
+   |   B    |       2       |    Mi    |      1      |
+   |   C    |       3       |    Hi    |      2      |
+2. Thread B(pri=Mi) wants lock 1 and lock 1 is held by thread A(pri=Lo). To allow thread A to release lock 1, we need to schedule thread A although it has lower priority than thread B. So we donate priority from B to A. After the donation, thread A and thread B are both of Mi priority.
+3. Thread C(pri=Hi) wants lock 2 and lock 2 is held by thread B(pri=Mi). To allow thread B to realease lock 2, we need to schedule thread B although it has lower priority than thread C. So we donate priority from C to B. After the donation, thread B and thread C are both of Hi priority.
 
 ANSWER_END
 
@@ -116,8 +131,28 @@ ANSWER_BEGIN
 
 Apply your previous answer to your code.
 
+1. When the lock is realeased, method `lockReleased(const char* lockId, Thread* thread)` is invoked.
+   ```C++
+   void lockReleased(const char* lockId, Thread* thread) {
+      char line[1024];
+      sprintf(line, "[lockReleased] thread %s released lock %s\n", thread->name, lockId);
+      verboseLog(line);
+      thread->priority = thread->originalPriority;
+      sortList(readyList, priorityCompare);
+      PUT_IN_MAP(const char*, lockToHoldingThread, lockId, (void*) NULL);
+
+      const char * waitingThreadList = (const char *) GET_FROM_MAP(const char *, lockToWaitingThreads, lockId);
+      for (int i = 0; i < listSize(waitingThreadList); i++) {
+         Thread* t = (Thread *) listGet(waitingThreadList, i);
+         REMOVE_FROM_MAP(Thread*, threadToWaitingLock, t);
+      }
+   }
+   ```
+2. Inside the method, we will remove all threads in `lockToWaitingThreads` under the key of given `lockId` from `threadToWaitingLock` map so that we will know these threads is not blocked by any lock during the `nextThreadToRun()` method.
+3. In the `nextThreadToRun()` method, we choose the highest priority non-blocked thread to run. So we can ensure that the highest priority thread waiting is called when the lock is released.
+
+
 ANSWER_END
 
 ### Bonus Points
 1. In `Thread.h`, the comments of method `void stopExecutingThreadForCycle();`.
-2. 

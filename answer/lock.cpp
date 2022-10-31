@@ -117,8 +117,6 @@ void lockReleased(const char* lockId, Thread* thread) {
         Thread* t = (Thread *) listGet(waitingThreadList, i);
         REMOVE_FROM_MAP(Thread*, threadToWaitingLock, t);
     }
-
-
 }
 
 #pragma endregion
