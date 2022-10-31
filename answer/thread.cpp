@@ -26,7 +26,9 @@ const char* wokentickToThreads = NULL;
  * Map's key: char*, which is the given type for generated lockId
  * Map's value: the thread holding the key/lock, if no thread is holding the key/lock, it should be NULL
  */
-const char* lockToThreadMap = NULL;
+const char* lockToHoldingThread = NULL;
+
+
 
 // return true if v1->priority is greater than v2->prioirty
 bool priorityCompare(void *v1, void *v2) {
@@ -118,7 +120,7 @@ void initializeCallback() {
     readyList = createNewList();
     wokentickToThreads = CREATE_MAP(int);
     // The type 
-    lockToThreadMap = CREATE_MAP(const char*);
+    lockToHoldingThread = CREATE_MAP(const char*);
 }
 
 void shutdownCallback() {

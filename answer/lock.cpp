@@ -10,7 +10,8 @@
 #pragma region Lock Callbacks
 
 void lockCreated(const char* lockId) {
-    PUT_IN_MAP(const char*, lockToThreadMap, lockId, (void*)NULL);
+    PUT_IN_MAP(const char*, lockToHoldingThread, lockId, (void*)NULL);
+
 }
 
 void lockAttempted(const char* lockId, Thread* thread) {
@@ -18,7 +19,7 @@ void lockAttempted(const char* lockId, Thread* thread) {
 }
 
 void lockAcquired(const char* lockId, Thread* thread) {
-    PUT_IN_MAP(const char*, lockToThreadMap, lockId, (void*)thread);
+    PUT_IN_MAP(const char*, lockToHoldingThread, lockId, (void*)thread);
 }
 
 void lockFailed(const char* lockId, Thread* thread) {
@@ -26,7 +27,7 @@ void lockFailed(const char* lockId, Thread* thread) {
 }
 
 void lockReleased(const char* lockId, Thread* thread) {
-    PUT_IN_MAP(const char*, lockToThreadMap, lockId, (void*) NULL);
+    PUT_IN_MAP(const char*, lockToHoldingThread, lockId, (void*) NULL);
 }
 
 #pragma endregion
@@ -34,7 +35,7 @@ void lockReleased(const char* lockId, Thread* thread) {
 #pragma region Lock Functions
 
 Thread* getThreadHoldingLock(const char* lockId) {
-    return (Thread *) GET_FROM_MAP(const char*, lockToThreadMap, lockId);
+    return (Thread *) GET_FROM_MAP(const char*, lockToHoldingThread, lockId);
 }
 
 #pragma endregion
