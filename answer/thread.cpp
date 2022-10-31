@@ -93,6 +93,22 @@ void destroyThread(Thread* thread) {
 Thread* nextThreadToRun(int currentTick) {
     char line[1024];
 
+    sprintf(line, "[nextThreadToRun] Showing readyList...\n");
+    verboseLog(line);
+    for (int i = 0; i < listSize(readyList); i++) {
+        Thread* t = (Thread *) listGet(readyList, i);
+        sprintf(
+            line,
+            "[nextThreadToRun] %d - thread %s - priority %d\n",
+            i,
+            t->name,
+            t->priority
+        );
+        verboseLog(line);
+    }
+    sprintf(line, "[nextThreadToRun] Showed readyList...\n");
+    verboseLog(line);
+
     // if there is any thread to resume at currentTick,
     // extract them from wokentickToThreads and add them into readyList
     bool needResumeThread = MAP_CONTAINS(int, wokentickToThreads, currentTick);
@@ -104,17 +120,20 @@ Thread* nextThreadToRun(int currentTick) {
         sortList(readyList, priorityCompare);
     }
 
+    sprintf(line, "[nextThreadToRun] there are %d threads in readyList\n", listSize(readyList));
+    verboseLog(line);
     if (listSize(readyList) == 0) {
         return NULL;
     }
         
     Thread* ret = NULL;
+    // choose 0 based on the assumption that our thread list is always sorted in descending order of priority
+    int threadIndex = 0;
     do {
-        // choose 0 based on the assumption that our thread list is always sorted in descending order of priority
-        int threadIndex = 0;
         sprintf(line, "[nextThreadToRun] trying thread index %d\n",
                 threadIndex);
         verboseLog(line);
+
         ret = ((Thread*)listGet(readyList, threadIndex));
         if (ret->state == TERMINATED) {
             sprintf(line, "[nextThreadToRun] thread %d was terminated\n",
@@ -122,8 +141,28 @@ Thread* nextThreadToRun(int currentTick) {
             verboseLog(line);
             removeFromList(readyList, ret);
             ret = NULL;
+        } else {
+            sprintf(line, "[nextThreadToRun] here wzw %d\n", __LINE__);
+            verboseLog(line);
+            bool retIsBlocked = MAP_CONTAINS(Thread*, threadToWaitingLock, ret);
+            sprintf(line, "[nextThreadToRun] here wzw %d\n", __LINE__);
+            verboseLog(line);
+            if (retIsBlocked) {
+                sprintf(line, "[nextThreadToRun] thread %s is blocked wzw\n", ret->name);
+                verboseLog(line);
+                ret = NULL;
+            }
+            sprintf(line, "[nextThreadToRun] here wzw %d\n", __LINE__);
+            verboseLog(line);
         }
-    } while (listSize(readyList) > 0 && ret == NULL);
+
+        threadIndex++;
+    } while (listSize(readyList) > 0 && ret == NULL && threadIndex < listSize(readyList));
+
+    // removeFromList(readyList, (void*) ret);
+    // addToList(readyList, ret);
+    // sortList(readyList, priorityCompare);
+
     return ret;
 }
 
@@ -140,9 +179,6 @@ void initializeCallback() {
 
 void shutdownCallback() {
     destroyList(readyList);
-    // todo: do I need to call free() explicitly on both maps?
-    // free(&wokentickToThreads);
-    // free(&lockMap);
 }
 
 // POSTCONDITION:
